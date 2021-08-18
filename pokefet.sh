@@ -82,7 +82,7 @@ main()
         echo ${pokemon_descr:written:$MAX_TEXT_LEN}
     done
     $RESET_TXTFX
-    tput cud $((HEIGHT - lines_to_skip))
+    tput cud $((HEIGHT - lines_to_skip - 3))
 
 }
 
