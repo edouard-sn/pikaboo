@@ -18,55 +18,66 @@ WIDTH=18
 BOX_DL="╰"
 BOX_DR="╯"
 BOX_HZ="─"
-BOX_VT="|"
+BOX_VT="│"
 BOX_UL="╭"
 BOX_UR="╮"
 
-PADDING=10
+PADDING=3
 MAX_TEXT_LEN=30
 
-HZ_LEN=$(($WIDTH - 2 + $PADDING + $MAX_TEXT_LEN))
+HZ_LEN=$(($WIDTH + $((PADDING * 2))+ $MAX_TEXT_LEN))
 PRINT_HZ="printf $BOX_HZ%.0s $(seq $HZ_LEN)"
 
-VT_LEN=$(($HEIGHT - 2))
-PRINT_VT="printf $BOX_VT\n%.0s"
+PRINT_VT="printf $BOX_VT$(tput cuf $HZ_LEN)$BOX_VT\n%.0s $(seq $HEIGHT)"
 
 
-# IMG_BACKEND="viu" TODO - w3m, kitty icat, maybe imgcat
 
 main() 
 { 
-    if ! which jq > /dev/null 2>&1; then # 2>&1 redirects error output to standart output
-        printf "Please install jq" # TODO better logging
-        exit 1
-    fi
-    # TODO same for viu - curl > function check all deps in loop 
+    which jq &> /dev/null || (
+        printf "Please install jq" && # TODO better logging
+        exit 1  )
 
+
+    # Get pokemon assets and info
     random_offset=$((RANDOM % PKCOUNT + 1)) # random list index
     random_pokemons="$(curl -L -s $PKDEX_API?pokedex=all | tail -n$random_offset)"
     
     pokemon_name=${random_pokemons%%:*} # remove ':' and what leads it
     pokemon_info=$(curl -L -s "$PKDEX_API?pokemon=$pokemon_name") 
+    pokemon_descr=$(echo $pokemon_info | jq '.info.description')
     pokemon_id=$(echo "$pokemon_info" | jq '.info.id') # real id
     pokemon_image_path="$TMPDIR/poke-$pokemon_id.png"
 
-    if ! test -f "$pokemon_image_path"; then # if file doesn't exist, download it 
-        curl -L -s "$PKIMG_API/$pokemon_id".png > "$pokemon_image_path" # -L manages 3XX redirects 
-    fi 
+    test -f "$pokemon_image_path" || curl -L -s "$PKIMG_API/$pokemon_id".png > "$pokemon_image_path" # -L manages 3XX redirects 
+     
 
+    # Print box and image
     printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n " &&
     
     viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH &&
+
+    tput cuu $HEIGHT && $PRINT_VT
     
     printf "$BOX_DL" && $PRINT_HZ && printf "$BOX_DR\n"
 
-    # Draw picture - TODO create different protocols (kitty icat (weird --place), maybe w3m)
- 
-    # TODO format ugly things
-    
+    # Print infos
+    skip_image="tput cuf "$((WIDTH+PADDING))
 
-    printf "%s\n" "$pokemon_name"
-    printf "%s\n" "$pokemon_info" | jq '.info.description'
+    tput cuu $HEIGHT && $skip_image && 
+    tput setaf 1 && tput bold && 
+    printf "Name:$(tput sgr0) %s\n\n" $pokemon_name
+   
+    tput setaf 4
+    lines_to_skip=0
+    for ((written=0; written<${#pokemon_descr}; written+=$MAX_TEXT_LEN))
+    do
+        ((lines_to_skip++))
+        $skip_image && 
+        echo ${pokemon_descr:written:$MAX_TEXT_LEN}
+    done
+    tput sgr0
+    tput cud $((HEIGHT - lines_to_skip))
 
 }
 
