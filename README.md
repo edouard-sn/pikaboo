@@ -6,4 +6,6 @@
 
 ## Screenshot
 
-<div style="text-align:center"><img src="https://i.imgur.com/2xrO2J8.png" /></div>
+<p align="center">
+  <img src="https://i.imgur.com/2xrO2J8.png">
+</p>
