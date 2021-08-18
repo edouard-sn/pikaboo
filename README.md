@@ -5,10 +5,10 @@
 Simply run the bash file.
 With no arguments, it will take a random Pokemon, otherwise it'll try to fetch a pokemon with the first argument as it's name. 
 
-## Screenshot
+## Screenshots
 
 <p align="center">
-  <img src="https://i.imgur.com/2xrO2J8.png">
+  <img src="https://i.imgur.com/6b8TSI3.png">
 </p>
 
 ## Requirements
