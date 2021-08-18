@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# first gen pokedex
+# first gen english pokedex 
 PKDEX_API=https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/pokedex.php 
 
 # original sprites
@@ -22,9 +22,6 @@ BOX_VT="│"
 BOX_UL="╭"
 BOX_UR="╮"
 
-RED=1
-GREEN=4
-
 PADDING=2
 MAX_TEXT_LEN=30
 
@@ -36,9 +33,12 @@ PRINT_VT="printf $BOX_VT$(tput cuf $HZ_LEN)$BOX_VT\n%.0s $(seq $HEIGHT)"
 SET_COLOR="tput setaf"
 RESET_TXTFX="tput sgr0"
 
+RED=1
+BLUE=4
+
 main() 
 { 
-    which jq &> /dev/null || (printf "Please install jq"; exit 1)
+    which jq &> /dev/null || (echo "Please install jq"; exit 1)
 
 
     # Get pokemon assets and info
@@ -47,12 +47,14 @@ main()
         random_pokemons="$(curl -L -s $PKDEX_API?pokedex=all | tail -n$random_offset)" 
         pokemon_name=${random_pokemons%%:*} # remove ':' and what leads it
     else
-        pokemon_name=${1,,}
-        pokemon_name=${pokemon_name^}
+        pokemon_name=${1,,} # lowercase
+        pokemon_name=${pokemon_name^} # uppercase 1st letter
     fi
 
     pokemon_info=$(curl -L -s "$PKDEX_API?pokemon=$pokemon_name")
+    
     [[ "$pokemon_info" =~ "Error" ]] && echo $pokemon_info && exit 1
+    
     pokemon_descr=$(echo $pokemon_info | jq '.info.description')
     pokemon_id=$(echo "$pokemon_info" | jq '.info.id') # real id
     pokemon_image_path="$TMPDIR/poke-$pokemon_id.png"
@@ -73,7 +75,7 @@ main()
     $SET_COLOR $RED && tput bold && 
     printf "Name:$($RESET_TXTFX) %s\n\n\n" $pokemon_name
    
-    $SET_COLOR $GREEN
+    $SET_COLOR $BLUE
     lines_to_skip=0
     for ((written=0; written<${#pokemon_descr}; written+=$MAX_TEXT_LEN))
     do
