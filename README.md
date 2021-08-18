@@ -1,11 +1,16 @@
-# Basic Bash Pokemon Viewer
+# Basic Bash Pokemon Viewer (1st Gen)
 
-## Requirements
+## Usage
 
-`bash 4+`, `jq`, `which`, `curl`, `printf`, `tput` and `viu`.
+Simply run the bash file.
+With no arguments, it will take a random Pokemon, otherwise it'll try to fetch a pokemon with the first argument as it's name. 
 
 ## Screenshot
 
 <p align="center">
   <img src="https://i.imgur.com/2xrO2J8.png">
 </p>
+
+## Requirements
+
+`bash 4+`, `jq`, `which`, `curl`, `printf`, `tput` and `viu`.
