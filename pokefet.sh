@@ -22,10 +22,10 @@ BOX_VT="│"
 BOX_UL="╭"
 BOX_UR="╮"
 
-PADDING=3
+PADDING=2
 MAX_TEXT_LEN=30
 
-HZ_LEN=$(($WIDTH + $((PADDING * 2))+ $MAX_TEXT_LEN))
+HZ_LEN=$(($WIDTH + $((PADDING * 3))+ $MAX_TEXT_LEN - 1))
 PRINT_HZ="printf $BOX_HZ%.0s $(seq $HZ_LEN)"
 
 PRINT_VT="printf $BOX_VT$(tput cuf $HZ_LEN)$BOX_VT\n%.0s $(seq $HEIGHT)"
@@ -53,7 +53,7 @@ main()
      
 
     # Print box and image
-    printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n " &&
+    printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n" && tput cuf $((PADDING))
     
     viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH &&
 
@@ -62,11 +62,11 @@ main()
     printf "$BOX_DL" && $PRINT_HZ && printf "$BOX_DR\n"
 
     # Print infos
-    skip_image="tput cuf "$((WIDTH+PADDING))
+    skip_image="tput cuf "$((WIDTH + PADDING * 2))
 
     tput cuu $HEIGHT && $skip_image && 
     tput setaf 1 && tput bold && 
-    printf "Name:$(tput sgr0) %s\n\n" $pokemon_name
+    printf "Name:$(tput sgr0) %s\n\n\n" $pokemon_name
    
     tput setaf 4
     lines_to_skip=0
