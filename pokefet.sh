@@ -22,29 +22,37 @@ BOX_VT="│"
 BOX_UL="╭"
 BOX_UR="╮"
 
+RED=1
+GREEN=4
+
 PADDING=2
 MAX_TEXT_LEN=30
 
 HZ_LEN=$(($WIDTH + $((PADDING * 3))+ $MAX_TEXT_LEN - 1))
-PRINT_HZ="printf $BOX_HZ%.0s $(seq $HZ_LEN)"
 
+PRINT_HZ="printf $BOX_HZ%.0s $(seq $HZ_LEN)"
 PRINT_VT="printf $BOX_VT$(tput cuf $HZ_LEN)$BOX_VT\n%.0s $(seq $HEIGHT)"
 
-
+SET_COLOR="tput setaf"
+RESET_TXTFX="tput sgr0"
 
 main() 
 { 
-    which jq &> /dev/null || (
-        printf "Please install jq" && # TODO better logging
-        exit 1  )
+    which jq &> /dev/null || (printf "Please install jq"; exit 1)
 
 
     # Get pokemon assets and info
-    random_offset=$((RANDOM % PKCOUNT + 1)) # random list index
-    random_pokemons="$(curl -L -s $PKDEX_API?pokedex=all | tail -n$random_offset)"
-    
-    pokemon_name=${random_pokemons%%:*} # remove ':' and what leads it
-    pokemon_info=$(curl -L -s "$PKDEX_API?pokemon=$pokemon_name") 
+    if [ "$#" -eq 0 ]; then
+        random_offset=$((RANDOM % PKCOUNT + 1))
+        random_pokemons="$(curl -L -s $PKDEX_API?pokedex=all | tail -n$random_offset)" 
+        pokemon_name=${random_pokemons%%:*} # remove ':' and what leads it
+    else
+        pokemon_name=${1,,}
+        pokemon_name=${pokemon_name^}
+    fi
+
+    pokemon_info=$(curl -L -s "$PKDEX_API?pokemon=$pokemon_name")
+    [[ "$pokemon_info" =~ "Error" ]] && echo $pokemon_info && exit 1
     pokemon_descr=$(echo $pokemon_info | jq '.info.description')
     pokemon_id=$(echo "$pokemon_info" | jq '.info.id') # real id
     pokemon_image_path="$TMPDIR/poke-$pokemon_id.png"
@@ -53,22 +61,19 @@ main()
      
 
     # Print box and image
-    printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n" && tput cuf $((PADDING))
-    
-    viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH &&
-
-    tput cuu $HEIGHT && $PRINT_VT
-    
+    printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n" && tput cuf $PADDING &&
+    viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH && # TODO : other image viewers 
+    tput cuu $HEIGHT && $PRINT_VT && 
     printf "$BOX_DL" && $PRINT_HZ && printf "$BOX_DR\n"
 
     # Print infos
     skip_image="tput cuf "$((WIDTH + PADDING * 2))
 
     tput cuu $HEIGHT && $skip_image && 
-    tput setaf 1 && tput bold && 
-    printf "Name:$(tput sgr0) %s\n\n\n" $pokemon_name
+    $SET_COLOR $RED && tput bold && 
+    printf "Name:$($RESET_TXTFX) %s\n\n\n" $pokemon_name
    
-    tput setaf 4
+    $SET_COLOR $GREEN
     lines_to_skip=0
     for ((written=0; written<${#pokemon_descr}; written+=$MAX_TEXT_LEN))
     do
@@ -76,7 +81,7 @@ main()
         $skip_image && 
         echo ${pokemon_descr:written:$MAX_TEXT_LEN}
     done
-    tput sgr0
+    $RESET_TXTFX
     tput cud $((HEIGHT - lines_to_skip))
 
 }
