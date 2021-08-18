@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # first gen pokedex
 PKDEX_API=https://courses.cs.washington.edu/courses/cse154/webservices/pokedex/pokedex.php 
@@ -10,11 +10,29 @@ PKCOUNT=151
 
 TMPDIR=${TMPDIR:-/tmp}
 
-RANDOM=${RANDOM:-$(od -tu2 -An -N2 < /dev/urandom)} # if RANDOM's not defined, use od to read a 2 bytes sized unsigned integer
+RANDOM=${RANDOM:-$(hexdump -n 2 -e '"%u"' /dev/urandom)}
 
-SCALE=1
+HEIGHT=10
+WIDTH=18
 
-# IMG_BACKEND="viu" TODO
+BOX_DL="╰"
+BOX_DR="╯"
+BOX_HZ="─"
+BOX_VT="|"
+BOX_UL="╭"
+BOX_UR="╮"
+
+PADDING=10
+MAX_TEXT_LEN=30
+
+HZ_LEN=$(($WIDTH - 2 + $PADDING + $MAX_TEXT_LEN))
+PRINT_HZ="printf $BOX_HZ%.0s $(seq $HZ_LEN)"
+
+VT_LEN=$(($HEIGHT - 2))
+PRINT_VT="printf $BOX_VT\n%.0s"
+
+
+# IMG_BACKEND="viu" TODO - w3m, kitty icat, maybe imgcat
 
 main() 
 { 
@@ -32,18 +50,21 @@ main()
     pokemon_id=$(echo "$pokemon_info" | jq '.info.id') # real id
     pokemon_image_path="$TMPDIR/poke-$pokemon_id.png"
 
-    if ! test -f "$pokemon_image_path"; then 
+    if ! test -f "$pokemon_image_path"; then # if file doesn't exist, download it 
         curl -L -s "$PKIMG_API/$pokemon_id".png > "$pokemon_image_path" # -L manages 3XX redirects 
     fi 
 
-    printf "%b" "\e[99D" # move cursor 99 to the left
-    # TODO a lot of \e#ABCD
+    printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n " &&
+    
+    viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH &&
+    
+    printf "$BOX_DL" && $PRINT_HZ && printf "$BOX_DR\n"
 
-
-    viu "$pokemon_image_path" -h $((10 * SCALE))
-    # Draw picture - TODO create different protocols (kitty icat, maybe w3m)
-
+    # Draw picture - TODO create different protocols (kitty icat (weird --place), maybe w3m)
+ 
     # TODO format ugly things
+    
+
     printf "%s\n" "$pokemon_name"
     printf "%s\n" "$pokemon_info" | jq '.info.description'
 
