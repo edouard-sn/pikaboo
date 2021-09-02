@@ -64,7 +64,7 @@ main()
 
     # Print box and image
     printf "$BOX_UL" && $PRINT_HZ && printf "$BOX_UR\n" && tput cuf $PADDING &&
-    viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH && # TODO : other image viewers 
+    viu "$pokemon_image_path" -h$HEIGHT -w$WIDTH -t && # TODO : other image viewers 
     tput cuu $HEIGHT && $PRINT_VT && 
     printf "$BOX_DL" && $PRINT_HZ && printf "$BOX_DR\n"
 
